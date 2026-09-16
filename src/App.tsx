@@ -120,6 +120,9 @@ function ScrollProgress() {
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [contributionVersion, setContributionVersion] = useState(() =>
+    Date.now(),
+  );
   const [githubRepositoryCount, setGithubRepositoryCount] = useState<number | null>(null);
   const [recentRepository, setRecentRepository] = useState<GithubRepository | null>(null);
   const [githubLoadError, setGithubLoadError] = useState(false);
@@ -131,6 +134,14 @@ function App() {
   useEffect(() => {
     const loadingTimer = window.setTimeout(() => setIsLoading(false), 3000);
     return () => window.clearTimeout(loadingTimer);
+  }, []);
+
+  useEffect(() => {
+    const contributionRefresh = window.setInterval(
+      () => setContributionVersion(Date.now()),
+      5 * 60 * 1000,
+    );
+    return () => window.clearInterval(contributionRefresh);
   }, []);
 
   useEffect(() => {
@@ -263,7 +274,7 @@ function App() {
               </div>
               <img
                 className="contributions-image"
-                src={`https://ghchart.rshah.org/168cff/${githubUsername}`}
+                src={`https://ghchart.rshah.org/168cff/${githubUsername}?v=${contributionVersion}`}
                 alt={`GitHub contribution activity for ${githubUsername}`}
               />
             </div>

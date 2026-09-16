@@ -177,7 +177,7 @@ em {
 .profile-page-copy h1 {
   max-width: 760px;
   margin: 14px 0 30px;
-  font-size: clamp(32px, 4.8vw, 60px);
+  font-size: clamp(28px, 4vw, 50px);
   line-height: 0.98;
   letter-spacing: -0.08em;
 }
@@ -1084,7 +1084,7 @@ textarea::placeholder {
   }
   .profile-page-copy h1 {
     margin: 12px 0 24px;
-    font-size: clamp(29px, 9vw, 48px);
+    font-size: clamp(26px, 8vw, 42px);
   }
   .profile-page-copy .kicker {
     font-size: 10px;

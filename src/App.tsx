@@ -122,6 +122,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [githubRepositoryCount, setGithubRepositoryCount] = useState<number | null>(null);
   const [recentRepository, setRecentRepository] = useState<GithubRepository | null>(null);
+  const [githubLoadError, setGithubLoadError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -153,7 +154,7 @@ function App() {
       setRecentRepository(repositories[0] ?? null);
     };
 
-    void loadGithubRepositories();
+    void loadGithubRepositories().catch(() => setGithubLoadError(true));
   }, []);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -210,7 +211,7 @@ function App() {
             <i />
           </button>
           <nav className={menuOpen ? "open" : ""}>
-            {["About", "Skills", "Projects", "Experience", "Contact"].map(
+            {["About", "Projects", "Experience", "Contact"].map(
               (item) => (
                 <a
                   key={item}
@@ -281,6 +282,10 @@ function App() {
                   >
                     {recentRepository.name} ↗
                   </a>
+                ) : githubLoadError ? (
+                  <a href={`https://github.com/${githubUsername}`} target="_blank" rel="noreferrer">
+                    View repositories ↗
+                  </a>
                 ) : (
                   <strong>Loading repository...</strong>
                 )}
@@ -314,47 +319,10 @@ function App() {
               </p>
             </div>
           </section>
-          <section className="skills section" id="skills">
-            <div className="section-heading">
-              <div>
-                <span className="section-number">02</span>
-                <p className="kicker">My toolkit</p>
-                <h2>
-                  Tools I use to
-                  <br />
-                  <em>bring ideas to life.</em>
-                </h2>
-              </div>
-              <p className="heading-note">
-                Always learning. Always building.
-                <br />
-                Here’s what I work with.
-              </p>
-            </div>
-            <div className="skill-grid">
-              {skillGroups.map((group) => (
-                <div className="skill-group" key={group.title}>
-                  <h3>{group.title}</h3>
-                  {group.skills.map((skill) => (
-                    <div className="skill" key={skill.name}>
-                      <div>
-                        <span>{skill.name}</span>
-                        <small>{skill.level}%</small>
-                      </div>
-                      <div className="meter">
-                        <i style={{ width: `${skill.level}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </section>
-
           <section className="projects section" id="projects">
             <div className="section-heading">
               <div>
-                <span className="section-number">03</span>
+                <span className="section-number">02</span>
                 <p className="kicker">Selected work</p>
                 <h2>
                   Things I’ve
@@ -418,7 +386,7 @@ function App() {
 
           <section className="experience section" id="experience">
             <div className="section-intro">
-              <span className="section-number">04</span>
+              <span className="section-number">03</span>
               <p className="kicker">Education & experience</p>
               <h2>
                 Experience &<br />
@@ -468,7 +436,7 @@ function App() {
 
           <section className="contact section" id="contact">
             <div className="contact-copy">
-              <span className="section-number">05</span>
+              <span className="section-number">04</span>
               <p className="kicker">Have a project in mind?</p>
               <h2>
                 Let’s make

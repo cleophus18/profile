@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import "./App.css";
+import SpaceBackground from "./SpaceBackground";
 import ctTechLogo from "./assets/CT TECH LOGO transparent.png";
 import webberImage from "./assets/Webber.jpeg";
 
@@ -19,6 +20,12 @@ type GithubRepository = {
   description: string | null;
   updated_at: string;
 };
+type SkillGroup = {
+  title: string;
+  icon: string;
+  summary: string;
+  skills: { name: string; level: number }[];
+};
 
 const projects: Project[] = [
   {
@@ -35,6 +42,70 @@ const projects: Project[] = [
 
 const birthDate = new Date(2007, 1, 18, 8, 43, 0);
 const githubUsername = "cleophus18";
+const emailAddress = "cleotshinyaleni@gmail.com";
+/** Local format, shown to the user as-is. */
+const phoneDisplay = "069 866 0259";
+/** International format, required by tel: and wa.me links. */
+const phoneE164 = "+27698660259";
+const whatsappLink = `https://wa.me/${phoneE164.replace("+", "")}`;
+
+const skillGroups: SkillGroup[] = [
+  {
+    title: "Languages",
+    icon: "{ } ",
+    summary: "The languages I reach for when solving problems.",
+    skills: [
+      { name: "TypeScript", level: 85 },
+      { name: "JavaScript", level: 88 },
+      { name: "HTML5 & CSS3", level: 92 },
+    ],
+  },
+  {
+    title: "Frontend",
+    icon: "\u25a0",
+    summary: "Building fast, responsive interfaces that feel effortless.",
+    skills: [
+      { name: "React", level: 88 },
+      { name: "Next.js", level: 82 },
+      { name: "Vite", level: 85 },
+      { name: "Tailwind CSS", level: 80 },
+      { name: "Responsive design", level: 90 },
+    ],
+  },
+  {
+    title: "Backend",
+    icon: "\u2699",
+    summary: "APIs and server logic that hold everything together.",
+    skills: [
+      { name: "Node.js", level: 85 },
+      { name: "Express", level: 82 },
+      { name: "REST APIs", level: 84 },
+      { name: "Authentication & JWT", level: 75 },
+    ],
+  },
+  {
+    title: "Databases",
+    icon: "\u25a4",
+    summary: "Storing, shaping and querying application data.",
+    skills: [
+      { name: "Firebase / Firestore", level: 82 },
+      { name: "MongoDB", level: 78 },
+    ],
+  },
+  {
+    title: "Tools & Platforms",
+    icon: "\u2692",
+    summary: "The daily workflow behind every project I ship.",
+    skills: [
+      { name: "Git & GitHub", level: 90 },
+      { name: "VS Code", level: 92 },
+      { name: "Postman", level: 80 },
+      { name: "Render / Vercel", level: 78 },
+      { name: "Figma", level: 72 },
+      { name: "Linux CLI", level: 70 },
+    ],
+  },
+];
 
 function getAge(now: Date) {
   const age = {
@@ -101,35 +172,22 @@ function AgeTimer() {
   );
 }
 
-function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const updateProgress = () => {
-      const scrollable =
-        document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(scrollable > 0 ? (window.scrollY / scrollable) * 100 : 0);
-    };
-    updateProgress();
-    window.addEventListener("scroll", updateProgress, { passive: true });
-    return () => window.removeEventListener("scroll", updateProgress);
-  }, []);
-
-  return <div className="scroll-progress" style={{ width: `${progress}%` }} />;
-}
-
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [contributionVersion, setContributionVersion] = useState(() =>
     Date.now(),
   );
-  const [githubRepositoryCount, setGithubRepositoryCount] = useState<number | null>(null);
-  const [recentRepository, setRecentRepository] = useState<GithubRepository | null>(null);
+  const [githubRepositoryCount, setGithubRepositoryCount] = useState<
+    number | null
+  >(null);
+  const [recentRepository, setRecentRepository] =
+    useState<GithubRepository | null>(null);
   const [githubLoadError, setGithubLoadError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
-  const email = "cleotshinyaleni@gmail.com";
+  const [copiedPhone, setCopiedPhone] = useState(false);
+  const email = emailAddress;
 
   useEffect(() => {
     const loadingTimer = window.setTimeout(() => setIsLoading(false), 3000);
@@ -146,49 +204,69 @@ function App() {
 
   useEffect(() => {
     const loadGithubRepositories = async () => {
-      const profileResponse = await fetch(
-        `https://api.github.com/users/${githubUsername}`,
-      );
-      if (!profileResponse.ok) {
-        throw new Error("Unable to load GitHub profile");
-      }
-      const profile = (await profileResponse.json()) as { public_repos: number };
-      setGithubRepositoryCount(profile.public_repos);
+      try {
+        const profileResponse = await fetch(
+          `https://api.github.com/users/${githubUsername}`,
+        );
+        if (!profileResponse.ok) {
+          throw new Error("Unable to load GitHub profile");
+        }
+        const profile = (await profileResponse.json()) as {
+          public_repos: number;
+        };
+        setGithubRepositoryCount(profile.public_repos);
 
-      const repositoriesResponse = await fetch(
-        `https://api.github.com/users/${githubUsername}/repos?sort=updated&direction=desc&per_page=1`,
-      );
-      if (!repositoriesResponse.ok) {
-        throw new Error("Unable to load GitHub repositories");
+        const repositoriesResponse = await fetch(
+          `https://api.github.com/users/${githubUsername}/repos?sort=updated&direction=desc&per_page=1`,
+        );
+        if (!repositoriesResponse.ok) {
+          throw new Error("Unable to load GitHub repositories");
+        }
+        const repositories =
+          (await repositoriesResponse.json()) as GithubRepository[];
+        setRecentRepository(repositories[0] ?? null);
+        setGithubLoadError(false);
+      } catch {
+        // Unauthenticated GitHub API calls are rate limited (HTTP 403), and
+        // browsers block them offline. Fall back instead of throwing.
+        setGithubLoadError(true);
       }
-      const repositories = (await repositoriesResponse.json()) as GithubRepository[];
-      setRecentRepository(repositories[0] ?? null);
     };
 
-    void loadGithubRepositories().catch(() => setGithubLoadError(true));
+    void loadGithubRepositories();
+
+    // Retry once after a short delay: the public GitHub API returns 403 when
+    // the shared IP is rate limited, which is usually temporary.
+    const retry = window.setTimeout(() => {
+      void loadGithubRepositories();
+    }, 15000);
+    return () => window.clearTimeout(retry);
   }, []);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSent(true);
   };
-  const copyEmail = () => {
+  const copyText = (value: string, done: (ok: boolean) => void) => {
     if (!navigator.clipboard) {
-      setCopied(false);
+      done(false);
       return;
     }
-    navigator.clipboard.writeText(email).then(
+    navigator.clipboard.writeText(value).then(
       () => {
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 2200);
+        done(true);
+        window.setTimeout(() => done(false), 2200);
       },
-      () => setCopied(false),
+      () => done(false),
     );
   };
+  const copyEmail = () => copyText(email, setCopied);
+  const copyPhone = () => copyText(phoneDisplay, setCopiedPhone);
   const closeMenu = () => setMenuOpen(false);
 
   return (
     <>
+      <SpaceBackground />
       {isLoading && (
         <div
           className="loading-screen"
@@ -198,16 +276,15 @@ function App() {
           <div className="loading-logo">
             <img src={ctTechLogo} alt="CT Tech" />
           </div>
-          <p>Building thoughtful digital experiences</p>
           <div className="loading-bar" aria-hidden="true">
             <span />
           </div>
         </div>
       )}
       <div className="site-shell" aria-busy={isLoading}>
-        <ScrollProgress />
         <header className="nav">
           <a className="brand" href="#age">
+            <img className="brand-mark" src={ctTechLogo} alt="" />
             Cleophus<span>.</span>
           </a>
           <button
@@ -222,17 +299,11 @@ function App() {
             <i />
           </button>
           <nav className={menuOpen ? "open" : ""}>
-            {["About", "Projects", "Experience", "Contact"].map(
-              (item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  onClick={closeMenu}
-                >
-                  {item}
-                </a>
-              ),
-            )}
+            {["About", "Projects", "Experience", "Contact"].map((item) => (
+              <a key={item} href={`#${item.toLowerCase()}`} onClick={closeMenu}>
+                {item}
+              </a>
+            ))}
             <a className="nav-cta" href="#contact" onClick={closeMenu}>
               Let’s talk <span>↗</span>
             </a>
@@ -251,9 +322,25 @@ function App() {
                   <AgeTimer />
                 </div>
                 <p className="profile-page-ambition">
-                  I’m here to help make South Africa more tech-based by
-                  building useful, accessible digital products.
+                  I’m here to help make South Africa more tech-based by building
+                  useful, accessible digital products.
                 </p>
+                <div className="hero-contact">
+                  <a
+                    className="lets-talk"
+                    href={`mailto:${emailAddress}?subject=Let%E2%80%99s%20talk%20%E2%80%94%20project%20enquiry`}
+                  >
+                    <span className="lets-talk-label">Let’s talk</span>
+                    <span className="lets-talk-value">{emailAddress}</span>
+                    <span className="lets-talk-arrow">↗</span>
+                  </a>
+                  <div className="hero-contact-alt">
+                    <span>or call me</span>
+                    <a className="phone-link" href={`tel:${phoneE164}`}>
+                      {phoneDisplay}
+                    </a>
+                  </div>
+                </div>
               </div>
               <img
                 className="profile-page-image"
@@ -280,7 +367,9 @@ function App() {
             </div>
             <div className="github-summary">
               <div>
-                <strong>{githubRepositoryCount ?? "—"}</strong>
+                <strong>
+                  {githubRepositoryCount ?? (githubLoadError ? "—" : "…")}
+                </strong>
                 <span>public repositories</span>
               </div>
               <div className="recent-repository">
@@ -294,7 +383,11 @@ function App() {
                     {recentRepository.name} ↗
                   </a>
                 ) : githubLoadError ? (
-                  <a href={`https://github.com/${githubUsername}`} target="_blank" rel="noreferrer">
+                  <a
+                    href={`https://github.com/${githubUsername}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     View repositories ↗
                   </a>
                 ) : (
@@ -319,9 +412,9 @@ function App() {
                 student from South Africa.
               </p>
               <p>
-                I enjoy turning ideas into useful digital products. As the
-                owner of CT Tech, I create responsive web experiences while
-                continuing to grow my skills in software engineering.
+                I enjoy turning ideas into useful digital products. As the owner
+                of CT Tech, I create responsive web experiences while continuing
+                to grow my skills in software engineering.
               </p>
               <p>
                 I’m curious, practical, and always looking for better ways to
@@ -329,11 +422,55 @@ function App() {
                 collaborations.
               </p>
             </div>
+            <div className="skills">
+              <div className="skills-heading">
+                <span className="section-number">02</span>
+                <p className="kicker">Skills & tools</p>
+                <h3>
+                  What I build
+                  <br />
+                  <em>with.</em>
+                </h3>
+              </div>
+              <div className="skill-grid">
+                {skillGroups.map((group) => (
+                  <article className="skill-group" key={group.title}>
+                    <header>
+                      <span className="skill-group-icon" aria-hidden="true">
+                        {group.icon}
+                      </span>
+                      <h4>{group.title}</h4>
+                    </header>
+                    <p className="skill-summary">{group.summary}</p>
+                    <ul>
+                      {group.skills.map((skill) => (
+                        <li key={skill.name}>
+                          <div className="skill-row">
+                            <span>{skill.name}</span>
+                            <span className="skill-level">{skill.level}%</span>
+                          </div>
+                          <div
+                            className="skill-meter"
+                            role="progressbar"
+                            aria-valuenow={skill.level}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${skill.name} proficiency`}
+                          >
+                            <span style={{ width: `${skill.level}%` }} />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            </div>
           </section>
           <section className="projects section" id="projects">
             <div className="section-heading">
               <div>
-                <span className="section-number">02</span>
+                <span className="section-number">03</span>
                 <p className="kicker">Selected work</p>
                 <h2>
                   Things I’ve
@@ -397,7 +534,7 @@ function App() {
 
           <section className="experience section" id="experience">
             <div className="section-intro">
-              <span className="section-number">03</span>
+              <span className="section-number">04</span>
               <p className="kicker">Education & experience</p>
               <h2>
                 Experience &<br />
@@ -447,7 +584,7 @@ function App() {
 
           <section className="contact section" id="contact">
             <div className="contact-copy">
-              <span className="section-number">04</span>
+              <span className="section-number">05</span>
               <p className="kicker">Have a project in mind?</p>
               <h2>
                 Let’s make
@@ -469,6 +606,32 @@ function App() {
                 >
                   {copied ? "Copied!" : "Copy email"}
                 </button>
+              </div>
+              <div className="contact-phone">
+                <span className="kicker">Prefer to call or WhatsApp?</span>
+                <a className="phone-number" href={`tel:${phoneE164}`}>
+                  {phoneDisplay}
+                </a>
+                <div className="contact-actions">
+                  <a className="button primary" href={`tel:${phoneE164}`}>
+                    Call now ↗
+                  </a>
+                  <a
+                    className="button ghost"
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    WhatsApp ↗
+                  </a>
+                  <button
+                    className="copy-email"
+                    type="button"
+                    onClick={copyPhone}
+                  >
+                    {copiedPhone ? "Copied!" : "Copy number"}
+                  </button>
+                </div>
               </div>
             </div>
             <form onSubmit={submit}>
@@ -510,7 +673,8 @@ function App() {
             <a href="https://linkedin.com/" target="_blank" rel="noreferrer">
               LinkedIn ↗
             </a>
-            <a href="mailto:cleotshinyaleni@gmail.com">Email ↗</a>
+            <a href={`mailto:${emailAddress}`}>Email ↗</a>
+            <a href={`tel:${phoneE164}`}>{phoneDisplay}</a>
           </div>
         </footer>
       </div>
